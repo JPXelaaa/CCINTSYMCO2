@@ -1,0 +1,134 @@
+:- use_module(library(dcg/basics)).
+
+:- dynamic male/1.
+:- dynamic female/1.
+:- dynamic parent/2.
+
+% First generation males
+male(eric).
+male(john).
+male(daniel).
+male(rafael).
+% Second generation males
+male(robert).
+male(miguel).
+male(gabriel).
+% Third generation males
+male(josh).
+male(joseph).
+
+% First generation females
+female(sofia).
+female(mary).
+female(amber).
+female(jane).
+% Second generation females
+female(linda).
+female(bianca).
+female(emily).
+% Third generation females
+female(mia).
+female(bea).
+female(camille).
+female(lia).
+
+% Parental relationships
+parent(eric, linda).
+parent(sofia, linda).
+
+parent(john, robert).
+parent(mary, robert).
+
+parent(john, miguel).
+parent(mary, miguel).
+
+parent(jane, bianca).
+parent(rafael, bianca).
+
+parent(john, emily).
+parent(mary, emily).
+
+parent(daniel, gabriel).
+parent(amber, gabriel).
+
+parent(linda, josh).
+parent(robert, josh).
+
+parent(linda, mia).
+parent(robert, mia).
+
+parent(linda, bea).
+parent(robert, bea).
+
+parent(miguel, joseph).
+parent(bianca, joseph).
+
+parent(emily, camille).
+parent(gabriel, camille).
+
+parent(emily, lia).
+parent(gabriel, lia).
+
+
+
+
+
+% Check if two individuals are siblings
+sibling_check(X, Y) :-
+    parent(A, X),
+    parent(A, Y),
+    X \= Y.
+
+% Test function: Adds a male sibling and links to parents
+
+
+sibling_function(X, Y) :-
+    findall(A, parent(A, Y), Parents), % Collect all parents of Y
+    Parents \= [] ->
+        (
+            assertz(male(X)), % Declare X as male
+            forall(
+                member(A, Parents),
+                assertz(parent(A, X)) % Add each parent of Y as a parent of X
+            ),
+            format('~w has been added as a sibling of ~w. Parents are ~w.~n', [X,Y,Parents])
+        );
+        write('Not feasible'), nl.
+
+
+
+
+% Sentence for "X and Y are siblings"
+sentence(sibling_function(X, Y)) -->
+    input(X), " and ", input(Y), " are siblings.".
+
+% Sentence for "X is a brother of Y"
+sentence(brother(X, Y)) -->
+    input(X), " is a brother of ", input(Y).
+
+% Sentence for "X is a sister of Y"
+sentence(sister(X, Y)) -->
+    input(X), " is a sister of ", input(Y).
+
+% Sentence for "X is the father of Y"
+sentence(father(X, Y)) -->
+    input(X), " is the father of ", input(Y).
+
+% Sentence for "X is the mother of Y"
+sentence(mother(X, Y)) -->
+    input(X), " is the mother of ", input(Y).
+
+% Helper: Parse a name from input
+input(Name) -->
+    string(NameCodes), { atom_codes(Name, NameCodes) }.
+
+% Main predicate: Parse and execute relationship statements
+start :-
+    write("Enter a relationship statement: "),
+    read_line_to_string(user_input, Input),   % Read input from user
+    string_codes(Input, Codes),
+    (   phrase(sentence(Action), Codes)      % Parse input into an action
+    ->  call(Action),                        % Call the parsed action
+        write("Action executed: "), write(Action), nl
+    ;   write("Error: Invalid input."), nl
+    ).
