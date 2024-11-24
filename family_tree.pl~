@@ -73,28 +73,158 @@ parent(gabriel, lia).
 
 
 
-% Check if two individuals are siblings
+% Check if two individuals are siblings (testing)
 sibling_check(X, Y) :-
     parent(A, X),
     parent(A, Y),
     X \= Y.
 
-% Test function: Adds a male sibling and links to parents
 
 
+% Adds siblings if person being connected too has parents
 sibling_function(X, Y) :-
-    findall(A, parent(A, Y), Parents), % Collect all parents of Y
-    Parents \= [] ->
+    findall(A, parent(A, Y), Parents),
+    Parents \= [],not(male(X)),not(female(Y)) ->
         (
-            assertz(male(X)), % Declare X as male
+            assertz(male(X)),
             forall(
                 member(A, Parents),
-                assertz(parent(A, X)) % Add each parent of Y as a parent of X
+                assertz(parent(A, X))
             ),
             format('~w has been added as a sibling of ~w. Parents are ~w.~n', [X,Y,Parents])
         );
         write('Not feasible'), nl.
 
+% Adds a sister if person being connected too has parents
+sister_function(X,Y):-
+    findall(A, parent(A, Y), Parents),
+    Parents \= [],not(female(Y)) ->
+        (
+            assertz(female(X)),
+            forall(
+                member(A, Parents),
+                assertz(parent(A, X))
+            ),
+            format('~w has been added as a sister of ~w. Parents are ~w.~n', [X,Y,Parents])
+        );
+        write('Not feasible'), nl.
+
+%Adds a brother if person being connected too has parents
+brother_function(X,Y):-
+    findall(A, parent(A, Y), Parents),
+    Parents \= [],not(male(X)) ->
+        (
+            assertz(male(X)),
+            forall(
+                member(A, Parents),
+                assertz(parent(A, X))
+            ),
+            format('~w has been added as a brother of ~w. Parents are ~w.~n', [X,Y,Parents])
+        );
+        write('Not feasible'), nl.
+
+%Adds a mother if the person being connected too doesn't have one.
+mother_function(X,Y):-
+       \+ (parent(A, Y), female(A)) ->
+        (
+            assertz(female(X)),
+            assertz(parent(X,Y)),
+            format('~w has been added as a mother of ~w. ~n', [X,Y])
+        );
+        write('Not feasible'), nl.
+
+%Adds a father if the person being connected too doesn't have one.
+father_function(X,Y):-
+       \+ (parent(A, Y), male(A)) ->
+        (
+            assertz(male(X)),
+            assertz(parent(X,Y)),
+            format('~w has been added as a father of ~w. ~n', [X,Y])
+        );
+        write('Not feasible'), nl.
+
+children_function(X, Y, Z, C) :-
+    format("Parsed parents_function: ~w, ~w, ~w, ~w~n", [X, Y, Z, C]),
+    write('lmao testing'), nl.
+
+% Adds a mother and father if the person doesn't have both (mother
+% first, then father, then child).
+parents_function(X,Y,Z):-
+    (\+ parent(_, Z)) ->
+        (
+            assertz(female(X)),
+            assertz(parent(X,Z)),
+            assertz(male(Y)),
+            assertz(parent(Y,Z)),
+            format('~w and ~w has been added as parents of ~w. ~n', [X,Y,Z])
+        );
+        write('Not feasible'), nl.
+
+%Adds a grandfather on the father's side if the person doesn't have one.
+grandfather_function(X,Y):-
+    parent(A,Y),male(A),\+ (parent(B,A),male(B)) ->
+        (
+            assertz(male(X)),
+            assertz(parent(X,A)),
+            format('~w has been added as the grandfather of ~w. ~n', [X,Y])
+        );
+        write('Not feasible'), nl.
+
+%Adds a grandmother on the father's side if the person doesn't have one.
+grandmother_function(X,Y):-
+    parent(A,Y),male(A),\+ (parent(B,A),female(B)) ->
+        (
+            assertz(female(X)),
+            assertz(parent(X,A)),
+            format('~w has been added as the grandmother of ~w. ~n', [X,Y])
+        );
+        write('Not feasible'), nl.
+
+%Adds a child to a person.
+child_function(X,Y):-
+    assertz(male(X)),
+    assertz(parent(Y,X)).
+
+%Adds a son to a person.
+son_function(X,Y):-
+    assertz(male(X)),
+    assertz(parent(Y,X)).
+
+%Adds a daughter to a person.
+daughter_function(X,Y):-
+    assertz(female(X)),
+    assertz(parent(Y,X)).
+
+%Adds an uncle to a person if that person has grandparents.
+uncle_function(X,Y):-
+    parent(Parent, Y),
+    findall(GP, parent(GP, Parent), Grandparents),
+    Grandparents \= []->
+    (
+    forall(
+        member(GP, Grandparents),
+        assertz(parent(GP, X))
+    ),
+    assertz(male(X)),
+    format('~w has been added as the uncle of ~w. ~n', [X,Y])
+    );
+    write('Not feasible'), nl.
+
+
+%Adds an aunt to a person if that person has grandparents.
+aunt_function(X,Y):-
+    parent(Parent, Y),
+    findall(GP, parent(GP, Parent), Grandparents),
+    Grandparents \= []->
+    (
+    forall(
+        member(GP, Grandparents),
+        assertz(parent(GP, X))
+    ),
+    assertz(female(X)),
+    format('~w has been added as the aunt of ~w. ~n', [X,Y])
+    );
+    write('Not feasible'), nl.
 
 
 
@@ -103,20 +233,44 @@ sentence(sibling_function(X, Y)) -->
     input(X), " and ", input(Y), " are siblings.".
 
 % Sentence for "X is a brother of Y"
-sentence(brother(X, Y)) -->
-    input(X), " is a brother of ", input(Y).
+sentence(brother_function(X, Y)) -->
+    input(X), " is a brother of ", input(Y),".".
 
 % Sentence for "X is a sister of Y"
-sentence(sister(X, Y)) -->
-    input(X), " is a sister of ", input(Y).
+sentence(sister_function(X, Y)) -->
+    input(X), " is a sister of ", input(Y),".".
 
 % Sentence for "X is the father of Y"
-sentence(father(X, Y)) -->
-    input(X), " is the father of ", input(Y).
+sentence(father_function(X, Y)) -->
+    input(X), " is the father of ", input(Y),".".
 
 % Sentence for "X is the mother of Y"
-sentence(mother(X, Y)) -->
-    input(X), " is the mother of ", input(Y).
+sentence(mother_function(X, Y)) -->
+    input(X), " is the mother of ", input(Y),".".
+
+sentence(children_function(X, Y, Z, C)) -->
+    input(X), " ", input(Y), " and ", input(Z), " are children of ", input(C), ".".
+sentence(parents_function(X, Y, Z)) -->
+    input(X), " and ", input(Y), " are the parents of ", input(Z),".".
+
+sentence(grandfather_function(X, Y)) -->
+    input(X), " is a grandfather of ", input(Y),".".
+
+sentence(grandmother_function(X, Y)) -->
+    input(X), " is a grandmother of ", input(Y),".".
+
+sentence(child_function(X, Y)) -->
+    input(X), " is a child of ", input(Y),".".
+
+sentence(son_function(X, Y)) -->
+    input(X), " is a son of ", input(Y),".".
+
+sentence(daughter_function(X, Y)) -->
+    input(X), " is a daughter of ", input(Y),".".
+
+
+
+
 
 % Helper: Parse a name from input
 input(Name) -->
