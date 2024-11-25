@@ -85,7 +85,7 @@ sibling_check(X, Y) :-
     X \= Y.
 
     are_siblings(X, Y) :-
-        (   sibling_check(X, Y)     % Check if X and Y are siblings
+        (   sibling_check(X, Y)   
         ->  write('Yes.'), nl
         ;   write('No.'), nl
         ).
@@ -162,7 +162,7 @@ find_father(X, Father) :-
 % Check if X and Y are the parents of X
 are_parents(X, Y, Z) :-
     (   parent(X, Z),
-        parent(Y, Z)            % Check if X and Y are the parents of Z
+        parent(Y, Z)           
     ->  write('Yes.'), nl
     ;   write('No.'), nl
     ).
