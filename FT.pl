@@ -117,13 +117,12 @@ is_daughter(X, Y) :-
     ).
 
 % "Who is/are the daughter/s of X" function
-get_daughter(X) :-
-    findall(D, (parent(X, D), female(D)), Daughters),
-    (   Daughters \= []
-    ->  write("Daughters: "), write(Daughters), nl
-    ;   write("No daughters found."), nl
-    ).
-
+get_daughter(X, D) :-
+    setof(D, (parent(X, D), female(D)), Daughters),
+    member(D, Daughters),
+    write(D), nl,
+    fail;
+    true.
 
 % "Is X a son of Y" function
 is_son(X, Y) :-
@@ -134,12 +133,12 @@ is_son(X, Y) :-
     ).
 
 % "Who is/are the son/s of X" function
-get_son(X) :-
-    findall(S, (parent(X, S), male(S)), Sons),
-    (   Sons \= []
-    ->  write("Sons: "), write(Sons), nl
-    ;   write("No sons found."), nl
-    ).
+get_son(X, S) :-
+    setof(S, (parent(X, S), male(S)), Sons),
+    member(S, Sons),
+    write(S), nl,
+    fail;
+    true.
 
 % "Is X a child of Y" function
 is_child(X, Y) :-
@@ -149,12 +148,12 @@ is_child(X, Y) :-
     ).
 
 % "Who is/are the child/ren of X" function
-get_children(X) :-
-    findall(C, parent(X, C), Children),
-    (   Children \= []
-    ->  write("Children: "), write(Children), nl
-    ;   write("No children found."), nl
-    ).
+get_children(X, C) :-
+    setof(C, (parent(X, C)), Children),
+    member(C, Children),
+    write(C), nl,
+    fail;
+    true.
 
 % "Are _, _, and __ children of _" function
 are_children(A, B, C, Y) :-
@@ -195,19 +194,9 @@ is_uncle(X, Y) :-
     ;   write('No uncle2.'), nl
     ).
 
-% Check if an individual is in the family tree
-is_in_family_tree(Person) :-
-    (   female(Person)
-        ; male(Person)
-    ->  write('Yes person.'), nl
-    ;   write('No person.'), nl
-    ).
-
 % Check if two individuals are relatives
 are_relatives(X, Y) :-
-    is_in_family_tree(X),
-    is_in_family_tree(Y), % Ensure both are in the family tree
-    (   spouse_check(X, Y)
+        spouse_check(X, Y)
     ;   sibling_check(X, Y)
     ;   cousin_check(X, Y)
     ;   parent(X, Y)
@@ -215,14 +204,7 @@ are_relatives(X, Y) :-
     ;   is_grandmother(X, Y)
     ;   is_grandfather(X, Y)
     ;   is_aunt(X, Y)
-    ;   is_uncle(X, Y)
-    ),
-    !, % Stop after finding the first match
-    write('Yes, they are relatives.'), nl.
-
-are_relatives(_, _) :-
-    write('No, they are not relatives.'), nl.
-
+    ;   is_uncle(X, Y).
 
 question(is_in_family_tree(X)) -->
     "Is ", input(X), "in the family tree?".
@@ -309,20 +291,17 @@ sentence(mother(X, Y)) -->
 
 % Helper: Parse a name from input
 input(Name) -->
-    string(NameCodes), { atom_codes(Name, NameCodes) }.
+    string(NameCodes), 
+    { atom_codes(NameAtom, NameCodes), downcase_atom(NameAtom, Name) }.
 
-% Main predicate: Parse and execute relationship statements
 start :-
     write("Enter a relationship statement or question: "),
-    read_line_to_string(user_input, Input),   % Read input from user
-    string_codes(Input, Codes),
-    (   phrase(sentence(Action), Codes)      % Parse input as a statement
-    ->  call(Action),
-        write("Action executed: "), write(Action), nl
-    ;   phrase(question(Query), Codes)       % Parse input as a question
-    ->  (   call(Query)                      % Evaluate the query
-         ->  true                            
-         ;   write("No more results."), nl
-         )
-    ;   write("Error: Invalid input."), nl
+    read_line_to_string(user_input, Input),
+    string_codes(Input, Codes), 
+    (   phrase(question(Query), Codes)
+    ->  (   call(Query)
+        ->  true
+        ;   write("No result found for the given query."), nl
+        )
+    ;   write("Invalid input. Please enter a valid relationship statement or question."), nl
     ).
