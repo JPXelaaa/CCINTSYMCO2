@@ -144,8 +144,13 @@ father_function(X,Y):-
         write('Not feasible'), nl.
 
 children_function(X, Y, Z, C) :-
-    format("Parsed parents_function: ~w, ~w, ~w, ~w~n", [X, Y, Z, C]),
-    write('lmao testing'), nl.
+    assertz(male(X)),
+    assertz(male(Y)),
+    assertz(male(Z)),
+    assertz(parent(C,X)),
+    assertz(parent(C,Y)),
+    assertz(parent(C,Z)),
+    format('~w ~w ~w has been added as children of ~w. ~n', [X,Y,Z,C]).
 
 % Adds a mother and father if the person doesn't have both (mother
 % first, then father, then child).
